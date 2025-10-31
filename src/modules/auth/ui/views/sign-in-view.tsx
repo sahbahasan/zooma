@@ -18,8 +18,9 @@ import { Alert, AlertTitle } from "@/components/ui/alert";
 import { OctagonAlertIcon } from "lucide-react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { FaGithub, FaGoogle } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -27,9 +28,9 @@ const formSchema = z.object({
 });
 
 export const SignInView = () => {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -43,6 +44,7 @@ export const SignInView = () => {
     authClient.signIn.email({
       email: data.email,
       password: data.password,
+      callbackURL: "/",
       fetchOptions: {
         onError(ctx) {
           setError(ctx.error.message);
@@ -50,7 +52,25 @@ export const SignInView = () => {
         },
         onSuccess(ctx) {
           router.push("/");
+        },
+      },
+    });
+  };
+
+  const onSocial = (provider: "github" | "google") => {
+    setError(null);
+    setPending(true);
+
+    authClient.signIn.social({
+      provider: provider,
+      callbackURL: "/",
+      fetchOptions: {
+        onError(ctx) {
+          setError(ctx.error.message);
           setPending(false);
+        },
+        onSuccess(ctx) {
+          //
         },
       },
     });
@@ -138,15 +158,18 @@ export const SignInView = () => {
                     disabled={pending}
                     className="w-full cursor-pointer"
                   >
-                    Google
+                    <FaGoogle />
                   </Button>
                   <Button
                     variant="outline"
                     type="button"
                     disabled={pending}
                     className="w-full cursor-pointer"
+                    onClick={() => {
+                      onSocial("github");
+                    }}
                   >
-                    Github
+                    <FaGithub />
                   </Button>
                 </div>
                 <div className="text-center text-sm">
